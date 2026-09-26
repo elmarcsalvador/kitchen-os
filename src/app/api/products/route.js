@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
 import { db, ensureDatabase, serialize } from '@/lib/db';
+import { optionsResponse, withCors } from '@/lib/cors';
 
 export const runtime = 'nodejs';
-const fields = ['name','category','quantityAmount','quantityUnit','minQty','purchaseDate','expiryDate','location','barcode','estimated','status'];
+const fields = ['name','category','quantityAmount','quantityUnit','minQty','purchaseDate','manufactureDate','shelfLifeMonths','expiryDate','location','barcode','estimated','status','isPackaged','labelData'];
 function clean(input) {
   const out = {};
   for (const field of fields) {
-    if (input[field] !== undefined) out[field] = field === 'minQty' || field === 'quantityAmount' ? Number(input[field] || 0) : field === 'estimated' ? Number(Boolean(input[field])) : String(input[field] ?? '');
+    if (input[field] !== undefined) out[field] = ['minQty','quantityAmount','shelfLifeMonths'].includes(field) ? Number(input[field] || 0) : ['estimated','isPackaged'].includes(field) ? Number(Boolean(input[field])) : String(input[field] ?? '');
   }
   return out;
 }
-const selectProduct = 'SELECT id,name,category,quantityAmount,quantityUnit,minQty,purchaseDate,expiryDate,location,barcode,estimated,status,createdAt FROM products';
-export async function GET() {
+const selectProduct = 'SELECT id,name,category,quantityAmount,quantityUnit,minQty,purchaseDate,manufactureDate,shelfLifeMonths,expiryDate,location,barcode,estimated,status,isPackaged,labelData,createdAt FROM products';
+async function getProducts() {
   try { await ensureDatabase(); const result = await db.execute(`${selectProduct} ORDER BY name COLLATE NOCASE`); return NextResponse.json(result.rows.map(serialize)); }
   catch { return NextResponse.json({ error: 'Inventory database is unavailable.' }, { status: 503 }); }
 }
-export async function POST(request) {
+export async function GET() { return withCors(await getProducts()); }
+async function createProduct(request) {
   try {
     await ensureDatabase(); const input = await request.json();
     const values = clean(input);
@@ -28,3 +30,5 @@ export async function POST(request) {
     return NextResponse.json(serialize(result.rows[0]), { status: 201 });
   } catch { return NextResponse.json({ error: 'Could not save product.' }, { status: 500 }); }
 }
+export async function POST(request) { return withCors(await createProduct(request)); }
+export function OPTIONS() { return optionsResponse(); }

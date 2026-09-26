@@ -31,7 +31,9 @@ export async function ensureDatabase() {
       minQty REAL NOT NULL DEFAULT 1, purchaseDate TEXT NOT NULL DEFAULT '',
       expiryDate TEXT NOT NULL DEFAULT '', location TEXT NOT NULL DEFAULT '',
       barcode TEXT NOT NULL DEFAULT '', estimated INTEGER NOT NULL DEFAULT 0,
-      status TEXT NOT NULL DEFAULT 'In stock', createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      status TEXT NOT NULL DEFAULT 'In stock', isPackaged INTEGER NOT NULL DEFAULT 0,
+      labelData TEXT NOT NULL DEFAULT '', manufactureDate TEXT NOT NULL DEFAULT '',
+      shelfLifeMonths REAL NOT NULL DEFAULT 0, createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`);
     let columns = await db.execute('PRAGMA table_info(products)');
     let names = new Set(columns.rows.map(row => row.name));
@@ -42,6 +44,20 @@ export async function ensureDatabase() {
     names = new Set(columns.rows.map(row => row.name));
     if (!names.has('quantityUnit')) {
       try { await db.execute("ALTER TABLE products ADD COLUMN quantityUnit TEXT NOT NULL DEFAULT 'unit'"); } catch {}
+    }
+    if (!names.has('isPackaged')) {
+      try { await db.execute('ALTER TABLE products ADD COLUMN isPackaged INTEGER NOT NULL DEFAULT 0'); } catch {}
+    }
+    if (!names.has('labelData')) {
+      try { await db.execute("ALTER TABLE products ADD COLUMN labelData TEXT NOT NULL DEFAULT ''"); } catch {}
+    }
+    columns = await db.execute('PRAGMA table_info(products)');
+    names = new Set(columns.rows.map(row => row.name));
+    if (!names.has('manufactureDate')) {
+      try { await db.execute("ALTER TABLE products ADD COLUMN manufactureDate TEXT NOT NULL DEFAULT ''"); } catch {}
+    }
+    if (!names.has('shelfLifeMonths')) {
+      try { await db.execute('ALTER TABLE products ADD COLUMN shelfLifeMonths REAL NOT NULL DEFAULT 0'); } catch {}
     }
     if (names.has('quantity')) {
       const oldRows = await db.execute('SELECT id,quantity FROM products WHERE quantityAmount=0');
@@ -64,5 +80,7 @@ export async function ensureDatabase() {
   return setupPromise;
 }
 export function serialize(row) {
-  return { ...row, quantityAmount:Number(row.quantityAmount), quantityUnit:row.quantityUnit||'unit', quantity:`${Number(row.quantityAmount)} ${row.quantityUnit||'unit'}`.trim(), minQty:Number(row.minQty), estimated:Boolean(row.estimated) };
+  let labelData=null;
+  if(row.isPackaged){try{labelData=JSON.parse(row.labelData||'{}')}catch{labelData={}}}
+  return { ...row, quantityAmount:Number(row.quantityAmount), quantityUnit:row.quantityUnit||'unit', quantity:`${Number(row.quantityAmount)} ${row.quantityUnit||'unit'}`.trim(), minQty:Number(row.minQty), shelfLifeMonths:Number(row.shelfLifeMonths||0), estimated:Boolean(row.estimated), isPackaged:Boolean(row.isPackaged), labelData };
 }

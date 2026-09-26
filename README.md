@@ -1,12 +1,19 @@
 # Kitchen OS
 
-A JavaScript / Next.js inventory app with SQLite-compatible persistent storage. It includes product records, quantity and expiry tracking, barcode scans, barcode product identification and CSV export.
+
+A JavaScript / Next.js inventory app with SQLite-compatible persistent storage. It includes product records, quantity and expiry tracking, barcode scans, packaged product label lookup, and CSV export.
 
 ## Database
 
 The app uses Turso (SQLite/libSQL) for Vercel. The same `@libsql/client` code uses a local SQLite file (`local.db`) when Turso environment variables are absent, and Turso Cloud when they are present. Vercel serverless instances do not have a permanent shared local filesystem, so the deployed app must be connected to Turso or another hosted database. Vercel lists Turso as a native Serverless SQLite integration: https://vercel.com/marketplace/tursocloud/database
 
 Each product stores its quantity as a numeric amount and a separate unit. The form suggests matching saved products and can restock them using their existing category and unit. The app creates its table and starter examples on the first API request. Subsequent users share the same database. Local edits are not automatically copied to the cloud database.
+
+Products can use an exact best-before date or a manufacture date plus a whole number of shelf-life months. Kitchen OS calculates the resulting date and uses it for expiry alerts and sorting.
+
+## Packaged product labels
+
+The barcode lookup checks Open Food Facts for packaged products. When a match includes label data, Kitchen OS saves the brand, package size, ingredients, allergens, and available nutrition values per 100 g / 100 ml with that inventory item. Nutrition appears only for products added through a packaged product lookup. Fresh produce can still be added manually without label nutrition. Product information is community contributed and may be incomplete; verify it against the package.
 
 ## Run locally
 
@@ -28,5 +35,3 @@ Turso setup documentation: https://vercel.com/marketplace/tursocloud/database
 ## Access
 
 There is currently no login. Anyone who can reach the deployed URL can view and change its inventory. Add authentication or Vercel Deployment Protection before sharing the URL publicly if that access is not intended.
-# kitchen-os
-# kitchen-os

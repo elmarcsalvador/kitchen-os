@@ -2,8 +2,19 @@
   "name": "kitchen-os",
   "version": "1.0.0",
   "private": true,
-  "scripts": {"dev": "next dev", "build": "next build", "start": "next start"},
-  "dependencies": {"@libsql/client": "^0.15.15", "next": "^16.3.6", "react": "^19.3.0", "react-dom": "^19.3.0"},
-  "devDependencies": {},
-  "overrides": { "postcss": "^8.5.28" }
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.15",
+    "@zxing/browser": "^0.2.1",
+    "next": "^16.3.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.28"
+  }
 }
